@@ -3,26 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Street Messenger</title>
+    <title>BeamChat</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <header>
-            <div class="status-dot"></div>
-            <span>Street Messenger (Secure)</span>
-        </header>
+    <div class="beam-wrapper">
+        <aside class="sidebar">
+            <header class="side-header">
+                <div class="menu-icon">☰</div>
+                <input type="text" class="search-bar" placeholder="Поиск">
+            </header>
+            <div class="chat-list" id="chatList">
+                </div>
+        </aside>
 
-        <div id="chat-box">
+        <main class="main-chat">
+            <header class="chat-header">
+                <div class="chat-info">
+                    <div class="avatar" id="currentAvatar">B</div>
+                    <div>
+                        <div class="chat-name" id="currentChatName">Выберите чат</div>
+                        <div class="chat-status">в сети</div>
+                    </div>
+                </div>
+                <div class="header-icons">🔍 ⋮</div>
+            </header>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="placeholder">Выберите, кому хотели бы написать</div>
             </div>
 
-        <div id="input-area">
-            <input type="text" id="username" placeholder="Имя..." maxlength="10">
-            <input type="text" id="message-input" placeholder="Напишите сообщение...">
-            <button id="send-btn">➔</button>
-        </div>
+            <footer class="input-area">
+                <div class="attach-icon">📎</div>
+                <input type="text" id="msgInput" placeholder="Написать сообщение...">
+                <div class="emoji-icon">😊</div>
+                <button id="sendBtn">➤</button>
+            </footer>
+        </main>
     </div>
 
-    <script type="module" src="chat.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
