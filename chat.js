@@ -1,48 +1,56 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+const chats = [
+    { id: 1, name: "Алекс (Курьер)", lastMsg: "Пицца доставлена?", color: "#ff5722" },
+    { id: 2, name: "Компаньон", lastMsg: "Обнаружена активность в 3:33", color: "#4caf50" },
+    { id: 3, name: "Разработка BeamChat", lastMsg: "Код готов к деплою", color: "#2196f3" }
+];
 
-// ТВОИ ДАННЫЕ ИЗ FIREBASE (получи их в настройках проекта)
-const firebaseConfig = {
-  apiKey: "ТВОЙ_API_KEY",
-  databaseURL: "ТВОЙ_DB_URL",
-  projectId: "ТВОЙ_PROJECT_ID",
-};
+const chatList = document.getElementById('chatList');
+const messagesContainer = document.getElementById('messagesContainer');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const messagesRef = ref(db, 'messages');
-
-const chatBox = document.getElementById('chat-box');
-const messageInput = document.getElementById('message-input');
-const usernameInput = document.getElementById('username');
-const sendBtn = document.getElementById('send-btn');
-
-// Функция отправки
-function sendMessage() {
-    const text = messageInput.value;
-    const user = usernameInput.value || "Anon";
-    
-    if (text.trim() !== "") {
-        push(messagesRef, {
-            user: user,
-            text: text,
-            timestamp: Date.now()
-        });
-        messageInput.value = "";
-    }
+// Рендер списка чатов
+function initChats() {
+    chatList.innerHTML = chats.map(chat => `
+        <div class="chat-item" onclick="selectChat(${chat.id}, '${chat.name}')">
+            <div class="avatar" style="background:${chat.color}">${chat.name[0]}</div>
+            <div class="info">
+                <div class="name">${chat.name}</div>
+                <div class="last-msg" style="font-size:12px; color:#707579">${chat.lastMsg}</div>
+            </div>
+        </div>
+    `).join('');
 }
 
-sendBtn.onclick = sendMessage;
+window.selectChat = (id, name) => {
+    document.getElementById('currentChatName').innerText = name;
+    document.getElementById('currentAvatar').innerText = name[0];
+    messagesContainer.innerHTML = ''; // Очистка при смене
+};
 
-// Слушаем новые сообщения в реальном времени
-onChildAdded(messagesRef, (data) => {
-    const msg = data.val();
-    const isMine = msg.user === usernameInput.value;
-    
+function sendMessage() {
+    const text = msgInput.value.trim();
+    if (!text) return;
+
     const msgDiv = document.createElement('div');
-    msgDiv.className = `msg ${isMine ? 'mine' : 'others'}`;
-    msgDiv.innerHTML = `<b>${msg.user}</b>${msg.text}`;
+    msgDiv.className = 'bubble sent';
+    msgDiv.innerText = text;
+    messagesContainer.appendChild(msgDiv);
     
-    chatBox.appendChild(msgDiv);
-    chatBox.scrollTop = chatBox.scrollHeight; // Автопрокрутка вниз
-});
+    msgInput.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Простой автоответ (бот)
+    setTimeout(() => {
+        const reply = document.createElement('div');
+        reply.className = 'bubble received';
+        reply.innerText = "BeamChat: Сообщение получено.";
+        messagesContainer.appendChild(reply);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 1000);
+}
+
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+
+initChats();
