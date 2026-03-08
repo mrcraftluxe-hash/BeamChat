@@ -1,56 +1,117 @@
-const chats = [
-    { id: 1, name: "Алекс (Курьер)", lastMsg: "Пицца доставлена?", color: "#ff5722" },
-    { id: 2, name: "Компаньон", lastMsg: "Обнаружена активность в 3:33", color: "#4caf50" },
-    { id: 3, name: "Разработка BeamChat", lastMsg: "Код готов к деплою", color: "#2196f3" }
-];
+// --- ДАННЫЕ И СОСТОЯНИЕ ---
+const state = {
+    currentChatId: null,
+    chats: [
+        { 
+            id: 1, name: "Алекс (Курьер)", color: "#ff5722", status: "в сети",
+            messages: [{ text: "Пицца у меня, скоро буду.", time: "12:40", type: "received" }]
+        },
+        { 
+            id: 2, name: "Компаньон", color: "#4caf50", status: "был(а) недавно",
+            messages: [{ text: "Обнаружена активность в районе порта. Будь осторожен.", time: "03:33", type: "received" }]
+        },
+        { 
+            id: 3, name: "BeamChat Support", color: "#2196f3", status: "в сети",
+            messages: [{ text: "Добро пожаловать в BeamChat! Настройте свой профиль.", time: "10:00", type: "received" }]
+        }
+    ]
+};
 
+// --- ЭЛЕМЕНТЫ UI ---
 const chatList = document.getElementById('chatList');
 const messagesContainer = document.getElementById('messagesContainer');
 const msgInput = document.getElementById('msgInput');
 const sendBtn = document.getElementById('sendBtn');
+const chatStatus = document.querySelector('.chat-status');
 
-// Рендер списка чатов
-function initChats() {
-    chatList.innerHTML = chats.map(chat => `
-        <div class="chat-item" onclick="selectChat(${chat.id}, '${chat.name}')">
-            <div class="avatar" style="background:${chat.color}">${chat.name[0]}</div>
-            <div class="info">
-                <div class="name">${chat.name}</div>
-                <div class="last-msg" style="font-size:12px; color:#707579">${chat.lastMsg}</div>
-            </div>
-        </div>
-    `).join('');
+// --- ЛОГИКА ЧАТОВ ---
+function init() {
+    renderChatList();
+    // Автоматически выбираем первый чат при загрузке
+    selectChat(state.chats[0].id);
 }
 
-window.selectChat = (id, name) => {
-    document.getElementById('currentChatName').innerText = name;
-    document.getElementById('currentAvatar').innerText = name[0];
-    messagesContainer.innerHTML = ''; // Очистка при смене
+function renderChatList() {
+    chatList.innerHTML = state.chats.map(chat => {
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        return `
+            <div class="chat-item ${state.currentChatId === chat.id ? 'active' : ''}" onclick="selectChat(${chat.id})">
+                <div class="avatar" style="background:${chat.color}">${chat.name[0]}</div>
+                <div class="info">
+                    <div class="name">${chat.name}</div>
+                    <div class="last-msg">${lastMsg ? lastMsg.text : ''}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.selectChat = (id) => {
+    state.currentChatId = id;
+    const chat = state.chats.find(c => c.id === id);
+    
+    // Обновляем шапку
+    document.getElementById('currentChatName').innerText = chat.name;
+    document.getElementById('currentAvatar').innerText = chat.name[0];
+    document.getElementById('currentAvatar').style.background = chat.color;
+    chatStatus.innerText = chat.status;
+
+    renderMessages();
+    renderChatList(); // Чтобы обновить активный класс
 };
+
+// --- ЛОГИКА СООБЩЕНИЙ ---
+function renderMessages() {
+    const chat = state.chats.find(c => c.id === state.currentChatId);
+    messagesContainer.innerHTML = chat.messages.map(m => `
+        <div class="bubble ${m.type}">
+            ${m.text}
+            <span class="msg-time">${m.time} ${m.type === 'sent' ? '✓✓' : ''}</span>
+        </div>
+    `).join('');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
 function sendMessage() {
     const text = msgInput.value.trim();
-    if (!text) return;
+    if (!text || !state.currentChatId) return;
 
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'bubble sent';
-    msgDiv.innerText = text;
-    messagesContainer.appendChild(msgDiv);
-    
+    const chat = state.chats.find(c => c.id === state.currentChatId);
+    const now = new Date();
+    const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+
+    // Добавляем наше сообщение
+    chat.messages.push({ text, time: timeStr, type: "sent" });
     msgInput.value = '';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    renderMessages();
+    renderChatList();
 
-    // Простой автоответ (бот)
-    setTimeout(() => {
-        const reply = document.createElement('div');
-        reply.className = 'bubble received';
-        reply.innerText = "BeamChat: Сообщение получено.";
-        messagesContainer.appendChild(reply);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 1000);
+    // Имитация ответа
+    simulateResponse(chat);
 }
 
-sendBtn.addEventListener('click', sendMessage);
-msgInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+function simulateResponse(chat) {
+    chatStatus.innerText = "печатает...";
+    chatStatus.style.color = "#3390ec";
 
-initChats();
+    setTimeout(() => {
+        const now = new Date();
+        const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        let responseText = "Интересно. Расскажи подробнее?";
+        if (chat.id === 2) responseText = "Сигнал нестабилен. Код ошибки 333.";
+        
+        chat.messages.push({ text: responseText, time: timeStr, type: "received" });
+        chatStatus.innerText = "в сети";
+        chatStatus.style.color = "";
+        
+        if (state.currentChatId === chat.id) renderMessages();
+        renderChatList();
+    }, 2000);
+}
+
+// --- СОБЫТИЯ ---
+sendBtn.onclick = sendMessage;
+msgInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+init();
